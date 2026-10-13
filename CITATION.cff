@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it using the metadata in this file."
+title: "Exploring Latency Correlation in Heterogeneous Multipath Networks"
+authors:
+  - family-names: "Zhou"
+    given-names: "Ying"
+repository-code: "https://github.com/yingzhou-bjtu/Relative-delay-network-measurement-data"
