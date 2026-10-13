@@ -2,7 +2,7 @@
 
 ## Repository Class
 
-- Repository: `yingzhou-bjtu/Relative-delay-network-measurement-data`
+- Repository: `yingzhou-bjtu/multipath-delay-measurements`
 - Class: Research dataset repository
 - Public scope: Relative-delay measurement data for heterogeneous multipath networks.
 

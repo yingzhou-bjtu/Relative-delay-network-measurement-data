@@ -1,8 +1,12 @@
-# Relative Delay Network Measurement Data
+# Multipath Relative-Delay Measurement Dataset
 
-This repository publishes the dataset used for studying latency correlation in
-heterogeneous multipath networks. The data includes DNS-derived IP lists and
+This repository publishes the dataset used for studying relative-delay behavior
+and latency correlation in heterogeneous multipath networks. The data includes DNS-derived IP lists and
 Wireshark packet captures used during the measurement workflow.
+
+## Project Identity
+
+See [docs/PROJECT_IDENTITY.md](docs/PROJECT_IDENTITY.md) for the public name, repository slug, scope, and directory contract.
 
 ## Repository Scope
 
