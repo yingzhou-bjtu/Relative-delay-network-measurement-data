@@ -11,6 +11,7 @@ from validate_data_manifest import (
     DEFAULT_DNS_DIR,
     DEFAULT_RAW_DIR,
     ManifestSpec,
+    manifest_spec_from_args,
     parse_csv_names,
     resolve_report_path,
     validate_manifest,
@@ -146,6 +147,26 @@ def test_manifest_spec_rejects_path_like_expected_files() -> None:
             raise AssertionError("path-like expected DNS file was accepted")
 
 
+def test_manifest_spec_rejects_dataset_dirs_outside_root() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        args = argparse.Namespace(
+            root=root,
+            dns_dir="../dns",
+            raw_dir=DEFAULT_RAW_DIR,
+            expected_dns_files=("ip.xlsx", "url.xlsx"),
+            representative_pcaps=("1.pcap",),
+            expected_segments=0,
+            min_file_bytes=1,
+        )
+        try:
+            manifest_spec_from_args(args)
+        except ValueError as exc:
+            assert "under root" in str(exc)
+        else:
+            raise AssertionError("dns_dir outside root was accepted")
+
+
 def test_resolve_report_path_rejects_dataset_file_overwrite() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         spec = make_dataset(Path(tmp))
@@ -186,6 +207,7 @@ if __name__ == "__main__":
     test_parse_csv_names_rejects_duplicates()
     test_parse_csv_names_rejects_paths()
     test_manifest_spec_rejects_path_like_expected_files()
+    test_manifest_spec_rejects_dataset_dirs_outside_root()
     test_resolve_report_path_rejects_dataset_file_overwrite()
     test_resolve_report_path_rejects_non_json_suffix()
     test_resolve_report_path_accepts_artifact_json()
