@@ -34,6 +34,36 @@ class ManifestSpec:
     def expected_pcap_count(self) -> int:
         return len(self.representative_pcaps) + self.expected_segments
 
+    def __post_init__(self) -> None:
+        validate_file_names("expected_dns_files", self.expected_dns_files)
+        validate_file_names("representative_pcaps", self.representative_pcaps)
+        if self.expected_segments < 0:
+            raise ValueError("expected_segments must be non-negative")
+        if self.min_file_bytes < 0:
+            raise ValueError("min_file_bytes must be non-negative")
+
+
+def validate_file_names(field_name: str, names: Sequence[str]) -> None:
+    if not names:
+        raise ValueError(f"{field_name} must include at least one file name")
+    duplicates = sorted(name for name, count in Counter(names).items() if count > 1)
+    if duplicates:
+        raise ValueError(
+            f"{field_name} contains duplicate names: {', '.join(duplicates)}"
+        )
+    invalid = sorted(
+        name
+        for name in names
+        if name in {"", ".", ".."}
+        or "/" in name
+        or "\\" in name
+        or Path(name).is_absolute()
+    )
+    if invalid:
+        raise ValueError(
+            f"{field_name} entries must be file names, not paths: {', '.join(invalid)}"
+        )
+
 
 def parse_csv_names(raw: str) -> tuple[str, ...]:
     names = tuple(name.strip() for name in raw.split(",") if name.strip())
@@ -44,6 +74,10 @@ def parse_csv_names(raw: str) -> tuple[str, ...]:
         raise argparse.ArgumentTypeError(
             f"duplicate comma-separated names are not allowed: {', '.join(duplicates)}"
         )
+    try:
+        validate_file_names("comma-separated names", names)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
     return names
 
 
@@ -87,10 +121,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 def manifest_spec_from_args(args: argparse.Namespace) -> ManifestSpec:
     root = args.root.resolve()
-    if args.expected_segments < 0:
-        raise ValueError("expected_segments must be non-negative")
-    if args.min_file_bytes < 0:
-        raise ValueError("min_file_bytes must be non-negative")
     return ManifestSpec(
         root=root,
         dns_dir=resolve_dataset_dir(root, str(args.dns_dir)).resolve(),

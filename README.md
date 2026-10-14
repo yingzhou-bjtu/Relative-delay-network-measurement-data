@@ -92,7 +92,9 @@ python3 scripts/validate_data_manifest.py \
 The default manifest check also rejects empty expected DNS spreadsheets or
 packet captures, which prevents placeholder files from satisfying the inventory.
 Segment capture filenames must also keep unique timestamps that increase with
-their segment IDs, so renamed or reordered capture files are reported.
+their segment IDs, so renamed or reordered capture files are reported. The
+expected DNS and representative capture lists accept file names only, not paths,
+so those checks cannot be configured to read outside their dataset directories.
 
 For new packet captures, verify that each file opens with `tshark` or Wireshark
 and record the capture date, tool version, and selection rule.

@@ -116,6 +116,35 @@ def test_parse_csv_names_rejects_duplicates() -> None:
         raise AssertionError("duplicate CSV names were accepted")
 
 
+def test_parse_csv_names_rejects_paths() -> None:
+    try:
+        parse_csv_names("1.pcap,../outside.pcap")
+    except argparse.ArgumentTypeError as exc:
+        assert "file names, not paths" in str(exc)
+    else:
+        raise AssertionError("path-like CSV names were accepted")
+
+
+def test_manifest_spec_rejects_path_like_expected_files() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        try:
+            ManifestSpec(
+                root=root,
+                dns_dir=root / DEFAULT_DNS_DIR,
+                raw_dir=root / DEFAULT_RAW_DIR,
+                expected_dns_files=("ip.xlsx", "../url.xlsx"),
+                representative_pcaps=("1.pcap",),
+                expected_segments=0,
+                min_file_bytes=1,
+            )
+        except ValueError as exc:
+            assert "expected_dns_files" in str(exc)
+            assert "file names, not paths" in str(exc)
+        else:
+            raise AssertionError("path-like expected DNS file was accepted")
+
+
 if __name__ == "__main__":
     test_validate_manifest_accepts_parameterized_dataset()
     test_validate_manifest_reports_missing_segment()
@@ -125,3 +154,5 @@ if __name__ == "__main__":
     test_validate_manifest_reports_duplicate_segment_timestamps()
     test_validate_manifest_reports_non_monotonic_segment_timestamps()
     test_parse_csv_names_rejects_duplicates()
+    test_parse_csv_names_rejects_paths()
+    test_manifest_spec_rejects_path_like_expected_files()
