@@ -76,6 +76,18 @@ Validate the committed dataset manifest:
 python3 scripts/validate_data_manifest.py
 ```
 
+The validator defaults to the committed dataset layout, and the same entrypoint
+can validate staged or relocated data without editing code:
+
+```bash
+python3 scripts/validate_data_manifest.py \
+  --root /path/to/dataset \
+  --dns-dir "1. Required files in the DNS resolution process" \
+  --raw-dir "2. Raw data" \
+  --expected-segments 1097 \
+  --json-out results/data_manifest_check.json
+```
+
 For new packet captures, verify that each file opens with `tshark` or Wireshark
 and record the capture date, tool version, and selection rule.
 
