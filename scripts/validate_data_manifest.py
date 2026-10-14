@@ -39,6 +39,11 @@ def parse_csv_names(raw: str) -> tuple[str, ...]:
     names = tuple(name.strip() for name in raw.split(",") if name.strip())
     if not names:
         raise argparse.ArgumentTypeError("at least one comma-separated name is required")
+    duplicates = sorted(name for name, count in Counter(names).items() if count > 1)
+    if duplicates:
+        raise argparse.ArgumentTypeError(
+            f"duplicate comma-separated names are not allowed: {', '.join(duplicates)}"
+        )
     return names
 
 
@@ -136,13 +141,16 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
     duplicate_segments = sorted(
         segment for segment, count in Counter(segments).items() if count > 1
     )
+    present_representative_pcaps = sorted(representative & set(pcap_files))
+    missing_representative_pcaps = sorted(representative - set(pcap_files))
     report = {
         "root": str(spec.root),
         "dns_dir": str(spec.dns_dir),
         "raw_dir": str(spec.raw_dir),
         "dns_file_count": len(dns_files),
         "pcap_file_count": len(pcap_files),
-        "representative_pcaps": sorted(representative & set(pcap_files)),
+        "representative_pcaps": present_representative_pcaps,
+        "missing_representative_pcaps": missing_representative_pcaps,
         "segment_count": len(segments),
         "first_segment": min(segments) if segments else None,
         "last_segment": max(segments) if segments else None,
@@ -165,7 +173,7 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         missing_dns
         or unexpected_dns
         or len(pcap_files) != spec.expected_pcap_count
-        or len(representative & set(pcap_files)) != len(representative)
+        or missing_representative_pcaps
         or invalid
         or duplicate_segments
         or actual_segments != expected_segments

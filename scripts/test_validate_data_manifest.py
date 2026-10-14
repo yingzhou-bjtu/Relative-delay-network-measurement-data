@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import tempfile
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from validate_data_manifest import (
     DEFAULT_DNS_DIR,
     DEFAULT_RAW_DIR,
     ManifestSpec,
+    parse_csv_names,
     validate_manifest,
 )
 
@@ -55,6 +57,15 @@ def test_validate_manifest_reports_missing_segment() -> None:
         assert report["missing_segments"] == [1]
 
 
+def test_validate_manifest_reports_missing_representative_pcap() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        (spec.raw_dir / "2.pcap").unlink()
+        report, failed = validate_manifest(spec)
+        assert failed
+        assert report["missing_representative_pcaps"] == ["2.pcap"]
+
+
 def test_validate_manifest_rejects_empty_dataset_files() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         spec = make_dataset(Path(tmp))
@@ -73,8 +84,19 @@ def test_validate_manifest_reports_duplicate_segment_ids() -> None:
         assert report["duplicate_segment_ids"] == [1]
 
 
+def test_parse_csv_names_rejects_duplicates() -> None:
+    try:
+        parse_csv_names("1.pcap,2.pcap,1.pcap")
+    except argparse.ArgumentTypeError as exc:
+        assert "duplicate comma-separated names" in str(exc)
+    else:
+        raise AssertionError("duplicate CSV names were accepted")
+
+
 if __name__ == "__main__":
     test_validate_manifest_accepts_parameterized_dataset()
     test_validate_manifest_reports_missing_segment()
+    test_validate_manifest_reports_missing_representative_pcap()
     test_validate_manifest_rejects_empty_dataset_files()
     test_validate_manifest_reports_duplicate_segment_ids()
+    test_parse_csv_names_rejects_duplicates()
