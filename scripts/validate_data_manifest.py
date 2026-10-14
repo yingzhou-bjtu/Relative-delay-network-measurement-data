@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import re
 from dataclasses import dataclass
@@ -132,6 +133,9 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
 
     expected_segments = set(range(spec.expected_segments))
     actual_segments = set(segments)
+    duplicate_segments = sorted(
+        segment for segment, count in Counter(segments).items() if count > 1
+    )
     report = {
         "root": str(spec.root),
         "dns_dir": str(spec.dns_dir),
@@ -145,6 +149,7 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         "missing_dns": missing_dns,
         "unexpected_dns": unexpected_dns,
         "invalid_pcap_names": invalid,
+        "duplicate_segment_ids": duplicate_segments,
         "missing_segments": sorted(expected_segments - actual_segments),
         "extra_segments": sorted(actual_segments - expected_segments),
         "min_file_bytes": spec.min_file_bytes,
@@ -162,6 +167,7 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         or len(pcap_files) != spec.expected_pcap_count
         or len(representative & set(pcap_files)) != len(representative)
         or invalid
+        or duplicate_segments
         or actual_segments != expected_segments
         or report["undersized_dns_files"]
         or report["undersized_pcap_files"]

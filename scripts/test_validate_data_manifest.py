@@ -64,7 +64,17 @@ def test_validate_manifest_rejects_empty_dataset_files() -> None:
         assert report["undersized_pcap_files"] == ["1.pcap"]
 
 
+def test_validate_manifest_reports_duplicate_segment_ids() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        touch(spec.raw_dir / "out_00001_20221205162606.pcap")
+        report, failed = validate_manifest(spec)
+        assert failed
+        assert report["duplicate_segment_ids"] == [1]
+
+
 if __name__ == "__main__":
     test_validate_manifest_accepts_parameterized_dataset()
     test_validate_manifest_reports_missing_segment()
     test_validate_manifest_rejects_empty_dataset_files()
+    test_validate_manifest_reports_duplicate_segment_ids()
