@@ -95,6 +95,9 @@ Segment capture filenames must also keep unique timestamps that increase with
 their segment IDs, so renamed or reordered capture files are reported. The
 expected DNS and representative capture lists accept file names only, not paths,
 so those checks cannot be configured to read outside their dataset directories.
+The optional `--json-out` report path must end in `.json` and is rejected when it
+points inside the DNS input or raw packet-capture directories, which prevents a
+validation report from overwriting committed measurement files.
 
 For new packet captures, verify that each file opens with `tshark` or Wireshark
 and record the capture date, tool version, and selection rule.

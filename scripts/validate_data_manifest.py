@@ -86,6 +86,28 @@ def resolve_dataset_dir(root: Path, value: str) -> Path:
     return path if path.is_absolute() else root / path
 
 
+def path_is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
+
+
+def resolve_report_path(path: Path, spec: ManifestSpec) -> Path:
+    resolved = path.expanduser().resolve()
+    if resolved.suffix.lower() != ".json":
+        raise ValueError(f"json_out must end with .json: {path}")
+    if resolved.exists() and resolved.is_dir():
+        raise ValueError(f"json_out is a directory, not a file: {path}")
+    protected_dirs = (spec.dns_dir, spec.raw_dir)
+    if any(path_is_relative_to(resolved, protected_dir) for protected_dir in protected_dirs):
+        raise ValueError(
+            "json_out must not be written inside the DNS input or raw packet-capture directories"
+        )
+    return resolved
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
@@ -237,13 +259,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         spec = manifest_spec_from_args(args)
     except ValueError as exc:
         parser.error(str(exc))
+    try:
+        json_out = (
+            resolve_report_path(args.json_out, spec)
+            if args.json_out is not None
+            else None
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
 
     report, failed = validate_manifest(spec)
     report_json = json.dumps(report, indent=2)
     print(report_json)
-    if args.json_out is not None:
-        args.json_out.parent.mkdir(parents=True, exist_ok=True)
-        args.json_out.write_text(report_json + "\n", encoding="utf-8")
+    if json_out is not None:
+        json_out.parent.mkdir(parents=True, exist_ok=True)
+        json_out.write_text(report_json + "\n", encoding="utf-8")
 
     if failed:
         return 1

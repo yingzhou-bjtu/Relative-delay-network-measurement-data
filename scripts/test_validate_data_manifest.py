@@ -12,6 +12,7 @@ from validate_data_manifest import (
     DEFAULT_RAW_DIR,
     ManifestSpec,
     parse_csv_names,
+    resolve_report_path,
     validate_manifest,
 )
 
@@ -145,6 +146,35 @@ def test_manifest_spec_rejects_path_like_expected_files() -> None:
             raise AssertionError("path-like expected DNS file was accepted")
 
 
+def test_resolve_report_path_rejects_dataset_file_overwrite() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        try:
+            resolve_report_path(spec.raw_dir / "report.json", spec)
+        except ValueError as exc:
+            assert "raw packet-capture" in str(exc)
+        else:
+            raise AssertionError("json_out accepted a raw data directory path")
+
+
+def test_resolve_report_path_rejects_non_json_suffix() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        try:
+            resolve_report_path(Path(tmp) / "results" / "report.txt", spec)
+        except ValueError as exc:
+            assert "must end with .json" in str(exc)
+        else:
+            raise AssertionError("json_out accepted a non-json suffix")
+
+
+def test_resolve_report_path_accepts_artifact_json() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        path = resolve_report_path(Path(tmp) / "results" / "report.json", spec)
+        assert path.name == "report.json"
+
+
 if __name__ == "__main__":
     test_validate_manifest_accepts_parameterized_dataset()
     test_validate_manifest_reports_missing_segment()
@@ -156,3 +186,6 @@ if __name__ == "__main__":
     test_parse_csv_names_rejects_duplicates()
     test_parse_csv_names_rejects_paths()
     test_manifest_spec_rejects_path_like_expected_files()
+    test_resolve_report_path_rejects_dataset_file_overwrite()
+    test_resolve_report_path_rejects_non_json_suffix()
+    test_resolve_report_path_accepts_artifact_json()
