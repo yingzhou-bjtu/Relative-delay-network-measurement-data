@@ -171,6 +171,27 @@ def test_manifest_spec_rejects_dataset_dirs_outside_root() -> None:
             raise AssertionError("dns_dir outside root was accepted")
 
 
+def test_manifest_spec_rejects_file_root() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root_file = Path(tmp) / "dataset.txt"
+        root_file.write_text("not a directory\n", encoding="utf-8")
+        args = argparse.Namespace(
+            root=root_file,
+            dns_dir=DEFAULT_DNS_DIR,
+            raw_dir=DEFAULT_RAW_DIR,
+            expected_dns_files=("ip.xlsx", "url.xlsx"),
+            representative_pcaps=("1.pcap",),
+            expected_segments=0,
+            min_file_bytes=1,
+        )
+        try:
+            manifest_spec_from_args(args)
+        except ValueError as exc:
+            assert "root is not a directory" in str(exc)
+        else:
+            raise AssertionError("file root was accepted")
+
+
 def test_manifest_spec_expands_user_root() -> None:
     args = argparse.Namespace(
         root=Path("~"),
@@ -253,6 +274,7 @@ if __name__ == "__main__":
     test_parse_csv_names_rejects_paths()
     test_manifest_spec_rejects_path_like_expected_files()
     test_manifest_spec_rejects_dataset_dirs_outside_root()
+    test_manifest_spec_rejects_file_root()
     test_manifest_spec_expands_user_root()
     test_manifest_spec_expands_user_dataset_dirs_under_root()
     test_resolve_report_path_rejects_dataset_file_overwrite()

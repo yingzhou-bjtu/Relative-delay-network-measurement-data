@@ -98,6 +98,8 @@ so those checks cannot be configured to read outside their dataset directories.
 The DNS and raw capture directory options are resolved under `--root`; to
 validate an external copy, point `--root` at that dataset root instead of using
 absolute child directory paths.
+When the root path already exists, it must be a directory rather than a file, so
+misconfigured dataset roots fail before the manifest scan.
 `--root`, `--dns-dir`, and `--raw-dir` expand `~` before this containment check,
 so home-relative dataset paths work without bypassing the root boundary.
 The optional `--json-out` report path must end in `.json` and is rejected when it

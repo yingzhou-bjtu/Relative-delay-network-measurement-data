@@ -148,6 +148,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def manifest_spec_from_args(args: argparse.Namespace) -> ManifestSpec:
     root = args.root.expanduser().resolve()
+    if root.exists() and not root.is_dir():
+        raise ValueError(f"root is not a directory: {args.root}")
     return ManifestSpec(
         root=root,
         dns_dir=resolve_dataset_dir(root, str(args.dns_dir)).resolve(),

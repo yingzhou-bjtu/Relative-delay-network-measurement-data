@@ -41,6 +41,8 @@ For a staged dataset copy, pass `--root`, `--dns-dir`, `--raw-dir`, and
 `--expected-segments` instead of editing the script. Use `--min-file-bytes` to
 control the minimum accepted size for expected files, and use `--json-out` to
 retain the validation report under `results/` or another artifact directory.
+An existing `--root` path must be a directory, so file paths are rejected before
+the manifest scan.
 Home-relative paths using `~` are expanded before data directories are checked
 against `--root`.
 The report path must end in `.json` and must not be inside the DNS input or raw
