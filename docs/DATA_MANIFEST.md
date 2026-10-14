@@ -31,5 +31,11 @@ Use packet-analysis tools directly on individual captures, for example:
 tshark -r "2. Raw data/1.pcap" -q -z io,stat,1
 ```
 
+Validate this manifest against the committed files:
+
+```bash
+python3 scripts/validate_data_manifest.py
+```
+
 When adding new data, update this manifest with the file count, naming pattern,
 capture source, capture date range, and any preprocessing applied.

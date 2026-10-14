@@ -24,6 +24,7 @@ files.
 ├── 2. Raw data/
 │   ├── 1.pcap, 2.pcap, 3.pcap  # representative packet captures
 │   └── out_*.pcap              # raw Wireshark capture segments
+├── scripts/validate_data_manifest.py
 ├── README.md                    # dataset entry point
 ├── CITATION.cff                 # citation metadata
 ├── docs/DATA_MANIFEST.md        # committed data inventory
@@ -67,6 +68,12 @@ For metadata and documentation changes:
 
 ```bash
 git diff --check
+```
+
+Validate the committed dataset manifest:
+
+```bash
+python3 scripts/validate_data_manifest.py
 ```
 
 For new packet captures, verify that each file opens with `tshark` or Wireshark
