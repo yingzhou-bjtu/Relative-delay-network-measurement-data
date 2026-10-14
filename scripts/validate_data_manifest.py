@@ -82,7 +82,7 @@ def parse_csv_names(raw: str) -> tuple[str, ...]:
 
 
 def resolve_dataset_dir(root: Path, value: str) -> Path:
-    path = Path(value)
+    path = Path(value).expanduser()
     resolved = (path if path.is_absolute() else root / path).resolve()
     if not path_is_relative_to(resolved, root.resolve()):
         raise ValueError("dataset directories must stay under root")
@@ -145,7 +145,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def manifest_spec_from_args(args: argparse.Namespace) -> ManifestSpec:
-    root = args.root.resolve()
+    root = args.root.expanduser().resolve()
     return ManifestSpec(
         root=root,
         dns_dir=resolve_dataset_dir(root, str(args.dns_dir)).resolve(),

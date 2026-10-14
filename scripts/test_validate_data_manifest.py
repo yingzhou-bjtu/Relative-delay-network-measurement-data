@@ -18,6 +18,9 @@ from validate_data_manifest import (
 )
 
 
+HOME = Path.home().resolve()
+
+
 def touch(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(b"x")
@@ -167,6 +170,35 @@ def test_manifest_spec_rejects_dataset_dirs_outside_root() -> None:
             raise AssertionError("dns_dir outside root was accepted")
 
 
+def test_manifest_spec_expands_user_root() -> None:
+    args = argparse.Namespace(
+        root=Path("~"),
+        dns_dir=DEFAULT_DNS_DIR,
+        raw_dir=DEFAULT_RAW_DIR,
+        expected_dns_files=("ip.xlsx", "url.xlsx"),
+        representative_pcaps=("1.pcap",),
+        expected_segments=0,
+        min_file_bytes=1,
+    )
+    spec = manifest_spec_from_args(args)
+    assert spec.root == HOME
+    assert spec.dns_dir == HOME / DEFAULT_DNS_DIR
+
+
+def test_manifest_spec_expands_user_dataset_dirs_under_root() -> None:
+    args = argparse.Namespace(
+        root=Path("~"),
+        dns_dir=str(Path("~") / DEFAULT_DNS_DIR),
+        raw_dir=DEFAULT_RAW_DIR,
+        expected_dns_files=("ip.xlsx", "url.xlsx"),
+        representative_pcaps=("1.pcap",),
+        expected_segments=0,
+        min_file_bytes=1,
+    )
+    spec = manifest_spec_from_args(args)
+    assert spec.dns_dir == HOME / DEFAULT_DNS_DIR
+
+
 def test_resolve_report_path_rejects_dataset_file_overwrite() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         spec = make_dataset(Path(tmp))
@@ -208,6 +240,8 @@ if __name__ == "__main__":
     test_parse_csv_names_rejects_paths()
     test_manifest_spec_rejects_path_like_expected_files()
     test_manifest_spec_rejects_dataset_dirs_outside_root()
+    test_manifest_spec_expands_user_root()
+    test_manifest_spec_expands_user_dataset_dirs_under_root()
     test_resolve_report_path_rejects_dataset_file_overwrite()
     test_resolve_report_path_rejects_non_json_suffix()
     test_resolve_report_path_accepts_artifact_json()
