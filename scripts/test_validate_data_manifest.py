@@ -46,6 +46,8 @@ def test_validate_manifest_accepts_parameterized_dataset() -> None:
         assert not failed
         assert report["pcap_file_count"] == 5
         assert report["segment_count"] == 2
+        assert report["first_segment_timestamp"] == "20221205162552"
+        assert report["last_segment_timestamp"] == "20221205162605"
 
 
 def test_validate_manifest_reports_missing_segment() -> None:
@@ -84,6 +86,27 @@ def test_validate_manifest_reports_duplicate_segment_ids() -> None:
         assert report["duplicate_segment_ids"] == [1]
 
 
+def test_validate_manifest_reports_duplicate_segment_timestamps() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        touch(spec.raw_dir / "out_00002_20221205162605.pcap")
+        report, failed = validate_manifest(spec)
+        assert failed
+        assert report["duplicate_segment_timestamps"] == ["20221205162605"]
+
+
+def test_validate_manifest_reports_non_monotonic_segment_timestamps() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        (spec.raw_dir / "out_00001_20221205162605.pcap").unlink()
+        touch(spec.raw_dir / "out_00001_20221205162500.pcap")
+        report, failed = validate_manifest(spec)
+        assert failed
+        assert report["non_monotonic_segment_timestamps"] == [
+            "out_00001_20221205162500.pcap"
+        ]
+
+
 def test_parse_csv_names_rejects_duplicates() -> None:
     try:
         parse_csv_names("1.pcap,2.pcap,1.pcap")
@@ -99,4 +122,6 @@ if __name__ == "__main__":
     test_validate_manifest_reports_missing_representative_pcap()
     test_validate_manifest_rejects_empty_dataset_files()
     test_validate_manifest_reports_duplicate_segment_ids()
+    test_validate_manifest_reports_duplicate_segment_timestamps()
+    test_validate_manifest_reports_non_monotonic_segment_timestamps()
     test_parse_csv_names_rejects_duplicates()

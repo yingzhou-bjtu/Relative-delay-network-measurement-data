@@ -41,6 +41,8 @@ For a staged dataset copy, pass `--root`, `--dns-dir`, `--raw-dir`, and
 `--expected-segments` instead of editing the script. Use `--min-file-bytes` to
 control the minimum accepted size for expected files, and use `--json-out` to
 retain the validation report under `results/` or another artifact directory.
+The validator also checks that `out_<segment>_<timestamp>.pcap` timestamps are
+unique and strictly increase with the segment number.
 
 When adding new data, update this manifest with the file count, naming pattern,
 capture source, capture date range, and any preprocessing applied.

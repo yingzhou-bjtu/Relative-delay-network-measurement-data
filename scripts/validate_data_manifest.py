@@ -125,7 +125,7 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
 
     pcap_files = list_file_names(spec.raw_dir, "*.pcap")
     representative = set(spec.representative_pcaps)
-    segments: list[int] = []
+    segment_rows: list[tuple[int, str, str]] = []
     invalid: list[str] = []
     for name in pcap_files:
         if name in representative:
@@ -134,13 +134,24 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         if match is None:
             invalid.append(name)
         else:
-            segments.append(int(match.group(1)))
+            segment_rows.append((int(match.group(1)), match.group(2), name))
 
+    segments = [segment_id for segment_id, _timestamp, _name in segment_rows]
+    segment_timestamps = [timestamp for _segment_id, timestamp, _name in segment_rows]
     expected_segments = set(range(spec.expected_segments))
     actual_segments = set(segments)
     duplicate_segments = sorted(
         segment for segment, count in Counter(segments).items() if count > 1
     )
+    duplicate_timestamps = sorted(
+        timestamp for timestamp, count in Counter(segment_timestamps).items() if count > 1
+    )
+    non_monotonic_timestamps: list[str] = []
+    previous_timestamp: str | None = None
+    for _segment_id, timestamp, name in sorted(segment_rows):
+        if previous_timestamp is not None and timestamp <= previous_timestamp:
+            non_monotonic_timestamps.append(name)
+        previous_timestamp = timestamp
     present_representative_pcaps = sorted(representative & set(pcap_files))
     missing_representative_pcaps = sorted(representative - set(pcap_files))
     report = {
@@ -154,10 +165,14 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         "segment_count": len(segments),
         "first_segment": min(segments) if segments else None,
         "last_segment": max(segments) if segments else None,
+        "first_segment_timestamp": min(segment_timestamps) if segment_timestamps else None,
+        "last_segment_timestamp": max(segment_timestamps) if segment_timestamps else None,
         "missing_dns": missing_dns,
         "unexpected_dns": unexpected_dns,
         "invalid_pcap_names": invalid,
         "duplicate_segment_ids": duplicate_segments,
+        "duplicate_segment_timestamps": duplicate_timestamps,
+        "non_monotonic_segment_timestamps": non_monotonic_timestamps,
         "missing_segments": sorted(expected_segments - actual_segments),
         "extra_segments": sorted(actual_segments - expected_segments),
         "min_file_bytes": spec.min_file_bytes,
@@ -176,6 +191,8 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         or missing_representative_pcaps
         or invalid
         or duplicate_segments
+        or duplicate_timestamps
+        or non_monotonic_timestamps
         or actual_segments != expected_segments
         or report["undersized_dns_files"]
         or report["undersized_pcap_files"]
