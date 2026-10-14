@@ -26,6 +26,7 @@ files.
 │   └── out_*.pcap              # raw Wireshark capture segments
 ├── README.md                    # dataset entry point
 ├── CITATION.cff                 # citation metadata
+├── docs/DATA_MANIFEST.md        # committed data inventory
 ├── LICENSE                      # reuse terms
 └── docs/OPEN_SOURCE_STANDARD.md # repository hygiene and dataset policy
 ```
@@ -41,6 +42,8 @@ files.
 
 The `2. Raw data/` directory contains packet captures in `pcap` format. These
 files can be inspected with Wireshark, tshark, or other packet-analysis tools.
+See [docs/DATA_MANIFEST.md](docs/DATA_MANIFEST.md) for the committed file
+counts, naming pattern, and update policy.
 
 Example inspection command:
 
