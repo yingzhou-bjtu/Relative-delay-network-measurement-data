@@ -102,7 +102,9 @@ absolute child directory paths.
 so home-relative dataset paths work without bypassing the root boundary.
 The optional `--json-out` report path must end in `.json` and is rejected when it
 points inside the DNS input or raw packet-capture directories, which prevents a
-validation report from overwriting committed measurement files.
+validation report from overwriting committed measurement files. JSON reports are
+written through a same-directory temporary file and atomically replaced, so an
+interrupted run does not leave a partial report at the requested output path.
 
 For new packet captures, verify that each file opens with `tshark` or Wireshark
 and record the capture date, tool version, and selection rule.

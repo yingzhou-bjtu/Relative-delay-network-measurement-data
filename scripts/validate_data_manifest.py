@@ -6,7 +6,9 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import json
+import os
 import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
@@ -255,6 +257,29 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
     return report, bool(failed)
 
 
+def write_report_json(path: Path, report_json: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temp_file:
+            temp_path = Path(temp_file.name)
+            temp_file.write(report_json)
+            temp_file.write("\n")
+            temp_file.flush()
+            os.fsync(temp_file.fileno())
+        temp_path.replace(path)
+    finally:
+        if temp_path is not None and temp_path.exists():
+            temp_path.unlink()
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -275,8 +300,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     report_json = json.dumps(report, indent=2)
     print(report_json)
     if json_out is not None:
-        json_out.parent.mkdir(parents=True, exist_ok=True)
-        json_out.write_text(report_json + "\n", encoding="utf-8")
+        write_report_json(json_out, report_json)
 
     if failed:
         return 1

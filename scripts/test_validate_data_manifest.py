@@ -15,6 +15,7 @@ from validate_data_manifest import (
     parse_csv_names,
     resolve_report_path,
     validate_manifest,
+    write_report_json,
 )
 
 
@@ -228,6 +229,18 @@ def test_resolve_report_path_accepts_artifact_json() -> None:
         assert path.name == "report.json"
 
 
+def test_write_report_json_replaces_report_without_temp_files() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "results" / "report.json"
+        path.parent.mkdir()
+        path.write_text('{"old": true}\n', encoding="utf-8")
+
+        write_report_json(path, '{"new": true}')
+
+        assert path.read_text(encoding="utf-8") == '{"new": true}\n'
+        assert not list(path.parent.glob(".report.json.*.tmp"))
+
+
 if __name__ == "__main__":
     test_validate_manifest_accepts_parameterized_dataset()
     test_validate_manifest_reports_missing_segment()
@@ -245,3 +258,4 @@ if __name__ == "__main__":
     test_resolve_report_path_rejects_dataset_file_overwrite()
     test_resolve_report_path_rejects_non_json_suffix()
     test_resolve_report_path_accepts_artifact_json()
+    test_write_report_json_replaces_report_without_temp_files()

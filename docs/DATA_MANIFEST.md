@@ -44,7 +44,8 @@ retain the validation report under `results/` or another artifact directory.
 Home-relative paths using `~` are expanded before data directories are checked
 against `--root`.
 The report path must end in `.json` and must not be inside the DNS input or raw
-packet-capture directories.
+packet-capture directories. Report files are atomically replaced from a
+same-directory temporary file.
 The validator also checks that `out_<segment>_<timestamp>.pcap` timestamps are
 unique and strictly increase with the segment number.
 
