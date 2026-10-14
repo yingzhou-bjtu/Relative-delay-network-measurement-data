@@ -38,8 +38,9 @@ python3 scripts/validate_data_manifest.py
 ```
 
 For a staged dataset copy, pass `--root`, `--dns-dir`, `--raw-dir`, and
-`--expected-segments` instead of editing the script. Use `--json-out` to retain
-the validation report under `results/` or another artifact directory.
+`--expected-segments` instead of editing the script. Use `--min-file-bytes` to
+control the minimum accepted size for expected files, and use `--json-out` to
+retain the validation report under `results/` or another artifact directory.
 
 When adding new data, update this manifest with the file count, naming pattern,
 capture source, capture date range, and any preprocessing applied.

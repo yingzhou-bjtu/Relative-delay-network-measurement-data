@@ -16,7 +16,7 @@ from validate_data_manifest import (
 
 def touch(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"")
+    path.write_bytes(b"x")
 
 
 def make_dataset(root: Path) -> ManifestSpec:
@@ -33,6 +33,7 @@ def make_dataset(root: Path) -> ManifestSpec:
         expected_dns_files=("ip.xlsx", "url.xlsx"),
         representative_pcaps=("1.pcap", "2.pcap", "3.pcap"),
         expected_segments=2,
+        min_file_bytes=1,
     )
 
 
@@ -54,6 +55,16 @@ def test_validate_manifest_reports_missing_segment() -> None:
         assert report["missing_segments"] == [1]
 
 
+def test_validate_manifest_rejects_empty_dataset_files() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = make_dataset(Path(tmp))
+        (spec.raw_dir / "1.pcap").write_bytes(b"")
+        report, failed = validate_manifest(spec)
+        assert failed
+        assert report["undersized_pcap_files"] == ["1.pcap"]
+
+
 if __name__ == "__main__":
     test_validate_manifest_accepts_parameterized_dataset()
     test_validate_manifest_reports_missing_segment()
+    test_validate_manifest_rejects_empty_dataset_files()

@@ -27,6 +27,7 @@ class ManifestSpec:
     expected_dns_files: tuple[str, ...]
     representative_pcaps: tuple[str, ...]
     expected_segments: int
+    min_file_bytes: int
 
     @property
     def expected_pcap_count(self) -> int:
@@ -64,6 +65,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--expected-segments", type=int, default=1097)
     parser.add_argument(
+        "--min-file-bytes",
+        type=int,
+        default=1,
+        help="Minimum accepted size for each expected dataset file.",
+    )
+    parser.add_argument(
         "--json-out",
         type=Path,
         default=None,
@@ -76,6 +83,8 @@ def manifest_spec_from_args(args: argparse.Namespace) -> ManifestSpec:
     root = args.root.resolve()
     if args.expected_segments < 0:
         raise ValueError("expected_segments must be non-negative")
+    if args.min_file_bytes < 0:
+        raise ValueError("min_file_bytes must be non-negative")
     return ManifestSpec(
         root=root,
         dns_dir=resolve_dataset_dir(root, str(args.dns_dir)).resolve(),
@@ -83,6 +92,7 @@ def manifest_spec_from_args(args: argparse.Namespace) -> ManifestSpec:
         expected_dns_files=tuple(args.expected_dns_files),
         representative_pcaps=tuple(args.representative_pcaps),
         expected_segments=int(args.expected_segments),
+        min_file_bytes=int(args.min_file_bytes),
     )
 
 
@@ -90,6 +100,15 @@ def list_file_names(directory: Path, pattern: str = "*") -> tuple[str, ...]:
     if not directory.is_dir():
         return ()
     return tuple(sorted(path.name for path in directory.glob(pattern) if path.is_file()))
+
+
+def undersized_files(directory: Path, file_names: Sequence[str], min_file_bytes: int) -> list[str]:
+    undersized = []
+    for name in file_names:
+        path = directory / name
+        if path.is_file() and path.stat().st_size < min_file_bytes:
+            undersized.append(name)
+    return sorted(undersized)
 
 
 def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
@@ -128,6 +147,13 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         "invalid_pcap_names": invalid,
         "missing_segments": sorted(expected_segments - actual_segments),
         "extra_segments": sorted(actual_segments - expected_segments),
+        "min_file_bytes": spec.min_file_bytes,
+        "undersized_dns_files": undersized_files(
+            spec.dns_dir, spec.expected_dns_files, spec.min_file_bytes
+        ),
+        "undersized_pcap_files": undersized_files(
+            spec.raw_dir, pcap_files, spec.min_file_bytes
+        ),
     }
 
     failed = (
@@ -137,6 +163,8 @@ def validate_manifest(spec: ManifestSpec) -> tuple[dict[str, object], bool]:
         or len(representative & set(pcap_files)) != len(representative)
         or invalid
         or actual_segments != expected_segments
+        or report["undersized_dns_files"]
+        or report["undersized_pcap_files"]
     )
     return report, bool(failed)
 

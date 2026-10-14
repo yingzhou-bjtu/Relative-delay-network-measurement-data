@@ -85,8 +85,12 @@ python3 scripts/validate_data_manifest.py \
   --dns-dir "1. Required files in the DNS resolution process" \
   --raw-dir "2. Raw data" \
   --expected-segments 1097 \
+  --min-file-bytes 1 \
   --json-out results/data_manifest_check.json
 ```
+
+The default manifest check also rejects empty expected DNS spreadsheets or
+packet captures, which prevents placeholder files from satisfying the inventory.
 
 For new packet captures, verify that each file opens with `tshark` or Wireshark
 and record the capture date, tool version, and selection rule.
