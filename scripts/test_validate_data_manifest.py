@@ -263,21 +263,6 @@ def test_write_report_json_replaces_report_without_temp_files() -> None:
 
 
 if __name__ == "__main__":
-    test_validate_manifest_accepts_parameterized_dataset()
-    test_validate_manifest_reports_missing_segment()
-    test_validate_manifest_reports_missing_representative_pcap()
-    test_validate_manifest_rejects_empty_dataset_files()
-    test_validate_manifest_reports_duplicate_segment_ids()
-    test_validate_manifest_reports_duplicate_segment_timestamps()
-    test_validate_manifest_reports_non_monotonic_segment_timestamps()
-    test_parse_csv_names_rejects_duplicates()
-    test_parse_csv_names_rejects_paths()
-    test_manifest_spec_rejects_path_like_expected_files()
-    test_manifest_spec_rejects_dataset_dirs_outside_root()
-    test_manifest_spec_rejects_file_root()
-    test_manifest_spec_expands_user_root()
-    test_manifest_spec_expands_user_dataset_dirs_under_root()
-    test_resolve_report_path_rejects_dataset_file_overwrite()
-    test_resolve_report_path_rejects_non_json_suffix()
-    test_resolve_report_path_accepts_artifact_json()
-    test_write_report_json_replaces_report_without_temp_files()
+    for name, test_func in sorted(globals().items()):
+        if name.startswith("test_") and callable(test_func):
+            test_func()
