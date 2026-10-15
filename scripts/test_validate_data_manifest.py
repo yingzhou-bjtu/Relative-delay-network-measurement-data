@@ -132,6 +132,36 @@ def test_parse_csv_names_rejects_paths() -> None:
         raise AssertionError("path-like CSV names were accepted")
 
 
+def test_parse_csv_names_rejects_non_string_input() -> None:
+    try:
+        parse_csv_names(None)
+    except argparse.ArgumentTypeError as exc:
+        assert "must be a string" in str(exc)
+    else:
+        raise AssertionError("non-string CSV input was accepted")
+
+
+def test_manifest_spec_requires_filename_sequences() -> None:
+    for names, message in (
+        ("ip.xlsx", "sequence of file names"),
+        (("ip.xlsx", 1), "entries must be strings"),
+    ):
+        try:
+            ManifestSpec(
+                root=Path("."),
+                dns_dir=Path(".") / DEFAULT_DNS_DIR,
+                raw_dir=Path(".") / DEFAULT_RAW_DIR,
+                expected_dns_files=names,
+                representative_pcaps=("1.pcap",),
+                expected_segments=0,
+                min_file_bytes=1,
+            )
+        except ValueError as exc:
+            assert message in str(exc)
+        else:
+            raise AssertionError(f"invalid filename sequence was accepted: {names!r}")
+
+
 def test_manifest_spec_rejects_path_like_expected_files() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)

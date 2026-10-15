@@ -52,8 +52,16 @@ def validate_nonnegative_int(name: str, value: int) -> int:
 
 
 def validate_file_names(field_name: str, names: Sequence[str]) -> None:
+    if isinstance(names, (str, bytes)) or not isinstance(names, Sequence):
+        raise ValueError(f"{field_name} must be a sequence of file names")
     if not names:
         raise ValueError(f"{field_name} must include at least one file name")
+    non_strings = [index for index, name in enumerate(names) if not isinstance(name, str)]
+    if non_strings:
+        positions = ", ".join(str(index) for index in non_strings)
+        raise ValueError(
+            f"{field_name} entries must be strings; invalid indexes: {positions}"
+        )
     duplicates = sorted(name for name, count in Counter(names).items() if count > 1)
     if duplicates:
         raise ValueError(
@@ -74,6 +82,8 @@ def validate_file_names(field_name: str, names: Sequence[str]) -> None:
 
 
 def parse_csv_names(raw: str) -> tuple[str, ...]:
+    if not isinstance(raw, str):
+        raise argparse.ArgumentTypeError("comma-separated names must be a string")
     names = tuple(name.strip() for name in raw.split(",") if name.strip())
     if not names:
         raise argparse.ArgumentTypeError("at least one comma-separated name is required")

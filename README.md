@@ -95,6 +95,9 @@ Segment capture filenames must also keep unique timestamps that increase with
 their segment IDs, so renamed or reordered capture files are reported. The
 expected DNS and representative capture lists accept file names only, not paths,
 so those checks cannot be configured to read outside their dataset directories.
+Direct `ManifestSpec` construction requires those lists to be sequences of
+strings, avoiding character-by-character parsing when a single filename is
+passed by mistake.
 The DNS and raw capture directory options are resolved under `--root`; to
 validate an external copy, point `--root` at that dataset root instead of using
 absolute child directory paths.
