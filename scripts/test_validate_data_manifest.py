@@ -14,6 +14,7 @@ from validate_data_manifest import (
     manifest_spec_from_args,
     parse_csv_names,
     resolve_report_path,
+    validate_nonnegative_int,
     validate_manifest,
     write_report_json,
 )
@@ -149,6 +150,43 @@ def test_manifest_spec_rejects_path_like_expected_files() -> None:
             assert "file names, not paths" in str(exc)
         else:
             raise AssertionError("path-like expected DNS file was accepted")
+
+
+def test_manifest_spec_rejects_non_integer_counts() -> None:
+    for field_name, overrides in (
+        ("expected_segments", {"expected_segments": 1.5}),
+        ("expected_segments", {"expected_segments": True}),
+        ("min_file_bytes", {"min_file_bytes": 2.5}),
+        ("min_file_bytes", {"min_file_bytes": True}),
+    ):
+        try:
+            common = dict(
+                root=Path("."),
+                dns_dir=Path(".") / DEFAULT_DNS_DIR,
+                raw_dir=Path(".") / DEFAULT_RAW_DIR,
+                expected_dns_files=("ip.xlsx", "url.xlsx"),
+                representative_pcaps=("1.pcap",),
+                expected_segments=0,
+                min_file_bytes=1,
+            )
+            common.update(overrides)
+            ManifestSpec(
+                **common,
+            )
+        except ValueError as exc:
+            assert field_name in str(exc)
+        else:
+            raise AssertionError(f"non-integer {field_name} was accepted")
+
+
+def test_nonnegative_int_boundary() -> None:
+    assert validate_nonnegative_int("n", 0) == 0
+    try:
+        validate_nonnegative_int("n", -1)
+    except ValueError as exc:
+        assert "non-negative" in str(exc)
+    else:
+        raise AssertionError("negative integer was accepted")
 
 
 def test_manifest_spec_rejects_dataset_dirs_outside_root() -> None:

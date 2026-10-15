@@ -39,10 +39,16 @@ class ManifestSpec:
     def __post_init__(self) -> None:
         validate_file_names("expected_dns_files", self.expected_dns_files)
         validate_file_names("representative_pcaps", self.representative_pcaps)
-        if self.expected_segments < 0:
-            raise ValueError("expected_segments must be non-negative")
-        if self.min_file_bytes < 0:
-            raise ValueError("min_file_bytes must be non-negative")
+        validate_nonnegative_int("expected_segments", self.expected_segments)
+        validate_nonnegative_int("min_file_bytes", self.min_file_bytes)
+
+
+def validate_nonnegative_int(name: str, value: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{name} must be an integer")
+    if value < 0:
+        raise ValueError(f"{name} must be non-negative")
+    return value
 
 
 def validate_file_names(field_name: str, names: Sequence[str]) -> None:
